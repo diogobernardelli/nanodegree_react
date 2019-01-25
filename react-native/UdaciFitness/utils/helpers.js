@@ -1,8 +1,10 @@
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, AsyncStorage } from 'react-native'
 import { FontAwesome, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { white, red, orange, blue, lightPurp, pink } from './colors'
+import { Notifications, Permissions } from 'expo'
 
+const NOTIFICATION_KEY = 'UdaciFitness:notifications'
 
 export function isBetween (num, x, y) {
   if (num >= x && num <= y) {
@@ -45,6 +47,57 @@ export function timeToString (time = Date.now()) {
   const todayUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
   return todayUTC.toISOString().split('T')[0]
 }
+
+export function clearLocalNotification () {
+  return AsyncStorage.removeItem(NOTIFICATION_KEY)
+    .then(Notifications.cancelAllScheduledNotificationsAsync)
+}
+
+function createNotification () {
+  return {
+    title: 'Log your stats!',
+    body: "👋 don't forget to log your stats for today!",
+    ios: {
+      sound: true,
+    },
+    android: {
+      sound: true,
+      priority: 'high',
+      sticky: false,
+      vibrate: true,
+    }
+  }
+}
+
+export function setLocalNotification () {
+  AsyncStorage.removeItem(NOTIFICATION_KEY)
+  AsyncStorage.getItem(NOTIFICATION_KEY)
+    .then(JSON.parse)
+    .then((data) => {
+      if (data === null) {
+        Permissions.askAsync(Permissions.NOTIFICATIONS)
+          .then(({ status }) => {
+            if (status === 'granted') {
+              Notifications.cancelAllScheduledNotificationsAsync()
+              let today = new Date()
+              today.setDate(today.getDate())
+              today.setHours(today.getHours())
+              today.setMinutes(today.getMinutes() + 1)
+              Notifications.scheduleLocalNotificationAsync(
+                createNotification(),
+                {
+                  time: today,
+                  repeat: 'day',
+                }
+              )
+
+              AsyncStorage.setItem(NOTIFICATION_KEY, JSON.stringify(true))
+            }
+          })
+      }
+    })
+}
+  
 
 const styles = StyleSheet.create({
   iconContainer: {
