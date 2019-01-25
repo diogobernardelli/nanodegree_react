@@ -24,6 +24,8 @@
     ],
     "ios": {
       "supportsTablet": true
-    }
+    },
+    "description": "Nanodegree React Udacity - All modules exercises",
+    "githubUrl": "https://github.com/diogobernardelli/nanodegree_react"
   }
 }
